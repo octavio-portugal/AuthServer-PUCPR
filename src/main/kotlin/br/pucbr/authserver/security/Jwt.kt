@@ -17,17 +17,17 @@ import java.time.ZonedDateTime
 import java.util.*
 
 @Component
-class Jwt {
+class Jwt (val properties: SecurityProperties){
     fun  createToken(user: User): String =
         UserToken(user).let {
             Jwts.builder()
-                .signWith(Keys.hmacShaKeyFor(SECRET.toByteArray()))
+                .signWith(Keys.hmacShaKeyFor(properties.secret.toByteArray()))
                 .json(JacksonSerializer())
                 .issuedAt(utcNow().toDate())
                 .expiration(utcNow().plusHours(
-                    if (it.isAdmin) ADMIN_EXPIRE_HOURS else EXPIRE_HOURS
+                    if (it.isAdmin) properties.adminExpireHours.toLong() else properties.expireHours.toLong()
                 ).toDate())
-                .issuer(ISSUER)
+                .issuer(properties.issuer)
                 .subject(user.id.toString())
                 .claim(USER_FIELD, it)
                 .compact()
@@ -40,13 +40,13 @@ class Jwt {
             val token = header.replace("Bearer", "").trim()
 
             val claims = Jwts
-                .parser().verifyWith(Keys.hmacShaKeyFor(SECRET.toByteArray()))
+                .parser().verifyWith(Keys.hmacShaKeyFor(properties.secret.toByteArray()))
                 .json(JacksonDeserializer(mapOf(USER_FIELD to UserToken::class.java)))
                 .build()
                 .parseSignedClaims(token)
                 .payload
 
-            if (claims.issuer != ISSUER) return null
+            if (claims.issuer != properties.issuer) return null
             return claims.get("user", UserToken::class.java).toAuthetication()
         } catch (e: Throwable) {
             log.debug("Token rejected", e)
@@ -56,11 +56,8 @@ class Jwt {
 
     companion object{
          val log = LoggerFactory.getLogger(Jwt::class.java)
-        const val SECRET = "32a8db2b916f39b2701874bcbe12a224422079ba"
-        const val EXPIRE_HOURS = 48L
-        const val ADMIN_EXPIRE_HOURS = 1L
-        const val ISSUER = "PUCPR AuthServer"
         const val USER_FIELD = "user"
+
 
         private fun utcNow() = ZonedDateTime.now(ZoneOffset.UTC)
         private fun ZonedDateTime.toDate(): Date = Date.from(this.toInstant())
