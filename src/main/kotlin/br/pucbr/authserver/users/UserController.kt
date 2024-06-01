@@ -1,10 +1,13 @@
 package br.pucbr.authserver.users
 
+import br.pucbr.authserver.users.requests.LoginRequest
+import br.pucbr.authserver.users.requests.UserRequest
+import br.pucbr.authserver.users.responses.UserResponse
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import jakarta.validation.Valid
-import jakarta.websocket.server.PathParam
-import org.hibernate.annotations.NotFound
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -21,7 +24,7 @@ class UserController(
         @RequestParam sortDir: String? = null,
         @RequestParam role: String? = null
     ) =
-        SortDir.entries.firstOrNull { it.name == (sortDir ?: "AS").uppercase() }
+        SortDir.entries.firstOrNull { it.name == (sortDir ?: "ASC").uppercase() }
             ?.let { userService.findAll(it, role) }
             ?.map { UserResponse(it) }
             ?.let { ResponseEntity.ok(it) }
@@ -36,6 +39,8 @@ class UserController(
             ?: ResponseEntity.notFound().build()
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @SecurityRequirement(name = "WebToken")
     fun delteById(@PathVariable id: Long): ResponseEntity<Void> =
         userService.delete(id)
             ?.let { ResponseEntity.ok().build() }
@@ -48,5 +53,11 @@ class UserController(
     ): ResponseEntity<Void> =
         if (userService.addRole(id, role)) ResponseEntity.ok().build()
         else ResponseEntity.noContent().build()
+
+    @PostMapping("/login")
+    fun login(@Valid @RequestBody login: LoginRequest) =
+        userService.login(login.email!!, login.password!!)
+            ?.let { ResponseEntity.ok(it) }
+            ?: ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
 
 }

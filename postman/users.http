@@ -9,4 +9,5 @@ Content-Type: application/json
 }
 
 ###
-GET localhost:8080/api/users/1
+GET localhost:8080/api/users
+Content-Type: application/json

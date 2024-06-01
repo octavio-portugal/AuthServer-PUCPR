@@ -1,4 +1,6 @@
-package br.pucbr.authserver.users
+package br.pucbr.authserver.users.responses
+
+import br.pucbr.authserver.users.User
 
 data class UserResponse(
     val id: Long,
