@@ -9,5 +9,17 @@ Content-Type: application/json
 }
 
 ###
-GET localhost:8080/api/users
+#GET localhost:8080/api/users
+#Content-Type: application/json
+
+POST localhost:8080/api/users/login
 Content-Type: application/json
+
+{
+  "email": "admin@authserver.com",
+  "password": "admin"
+}
+> {%
+client.global.set("token", response.body.token)
+client.global.set("id", response.body.user.id)
+ %}

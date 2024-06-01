@@ -41,10 +41,9 @@ class UserController(
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "WebToken")
-    fun delteById(@PathVariable id: Long): ResponseEntity<Void> =
-        userService.delete(id)
-            ?.let { ResponseEntity.ok().build() }
-            ?: ResponseEntity.notFound().build()
+    fun deleteById(@PathVariable id: Long): ResponseEntity<Void> =
+        if (userService.delete(id)) ResponseEntity.ok().build()
+        else ResponseEntity.notFound().build()
 
     @PutMapping("/{id}/roles/{role}")
     fun grant(

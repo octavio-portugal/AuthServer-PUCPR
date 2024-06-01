@@ -1,5 +1,6 @@
 package br.pucbr.authserver.users
 
+import br.pucbr.authserver.exception.BadRequestException
 import br.pucbr.authserver.roles.RoleRepository
 import br.pucbr.authserver.security.Jwt
 import br.pucbr.authserver.users.responses.LoginResponse
@@ -35,7 +36,16 @@ class UserService(
 
     fun findByIdOrNull(id: Long) = userRepository.findByIdOrNull(id)
 
-    fun delete(id: Long) = userRepository.deleteById(id)
+    fun delete(id: Long): Boolean {
+        val user = userRepository.findByIdOrNull(id) ?: return false
+        if (user.roles.any{ it.name == "ADMIN" }) {
+            val count = userRepository.findByRole("ADMIN").size
+            if (count == 1) throw BadRequestException("Cannot delete the last system admin!")
+        }
+        userRepository.delete(user)
+        log.warn("User deleted. id={} name={}", user.id, user.name)
+        return true
+    }
 
     fun addRole(id: Long, roleName: String): Boolean {
         val user = userRepository.findByIdOrNull(id)
