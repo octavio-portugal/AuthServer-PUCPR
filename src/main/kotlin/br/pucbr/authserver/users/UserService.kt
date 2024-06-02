@@ -1,5 +1,6 @@
 package br.pucbr.authserver.users
 
+import br.pucbr.authserver.books.BookRepository
 import br.pucbr.authserver.exception.BadRequestException
 import br.pucbr.authserver.roles.RoleRepository
 import br.pucbr.authserver.security.Jwt
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service
 class UserService(
     private val userRepository: UserRepository,
     private val roleRepository: RoleRepository,
+    private val bookRepository: BookRepository,
     private val jwt: Jwt
 ) {
 
@@ -56,6 +58,19 @@ class UserService(
         val role = roleRepository.findByName(roleName)
             ?: throw IllegalArgumentException("Invalid role $roleName")
         user.roles.add(role)
+        userRepository.save(user)
+        return true
+    }
+
+    fun addBook(id: Long, bookTitle: String): Boolean {
+        val user = userRepository.findByIdOrNull(id)
+            ?: throw IllegalArgumentException("User $id not found!")
+
+        if (user.books.any { it.title == bookTitle }) return false
+
+        val book = bookRepository.findByTitle(bookTitle)
+            ?: throw IllegalArgumentException("Invalid book $bookTitle!")
+        user.books.add(book)
         userRepository.save(user)
         return true
     }

@@ -51,7 +51,15 @@ class UserController(
         @PathVariable role: String
     ): ResponseEntity<Void> =
         if (userService.addRole(id, role)) ResponseEntity.ok().build()
-        else ResponseEntity.noContent().build()
+        else ResponseEntity.badRequest().build()
+
+    @PutMapping("/{id}/books/{title}")
+    fun grantBook(
+        @PathVariable id: Long,
+        @PathVariable title: String
+    ): ResponseEntity<Void> =
+        if (userService.addBook(id, title)) ResponseEntity.ok().build()
+        else ResponseEntity.notFound().build()
 
     @PostMapping("/login")
     fun login(@Valid @RequestBody login: LoginRequest) =
